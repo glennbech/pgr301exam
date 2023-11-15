@@ -20,7 +20,7 @@ jobs:
           cd kjell/hello_world
           pip install -r requirements.txt
           pip install aws-sam-cli
-          sam build
+          sam build --template-file ../template.yaml
 
   deploy:
     if: github.ref == 'refs/heads/main'
@@ -31,4 +31,4 @@ jobs:
       - name: Deploy SAM application
         run: |
           cd kjell/hello_world
-          sam deploy --guided
+          sam deploy --guided --template-file ../template.yaml
