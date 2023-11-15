@@ -1,0 +1,32 @@
+name: SAM Application Workflow
+
+on: 
+  push:
+    branches:
+      - main
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install aws-sam-cli
+      - name: Build SAM application
+        run: sam build
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Deploy SAM application
+        run: sam deploy --guided
