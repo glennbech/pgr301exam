@@ -1,4 +1,4 @@
-name: SAM Application Workflow
+name: SAM Application Workflow candidate "2029"
 
 on: 
   push:
@@ -37,4 +37,4 @@ jobs:
       - name: Deploy SAM application
         run: |
           cd kjell/hello_world
-          sam deploy --no-fail-on-empty-changeset --stack-name exampgr301stack --s3-bucket kjellsimagebucket --region eu-west-1 --capabilities CAPABILITY_IAM --template-file ../template.yaml
+          sam deploy --no-fail-on-empty-changeset --stack-name exampgr301-stack-candidate2029 --s3-bucket kjellsimagebucket --region eu-west-1 --capabilities CAPABILITY_IAM --template-file ../template.yaml
