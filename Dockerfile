@@ -17,10 +17,5 @@ COPY --from=build /app/target/s3rekognition-0.0.1-SNAPSHOT.jar /app/
 #expose a port to run on
 EXPOSE 8080
 
-#enviroment variable
-ENV AWS_ACCESS_KEY_ID=XXX
-ENV AWS_SECRET_ACCESS_KEY=YYY
-ENV BUCKET_NAME=kjellsimagebucket
-
 #running the application
 ENTRYPOINT ["java", "-jar", "s3rekognition-0.0.1-SNAPSHOT.jar"]
