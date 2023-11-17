@@ -36,4 +36,10 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
     - name: Clean up Docker
-      run: docker rmi $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+      run: |
+        echo "Removing images: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG and $ECR_REGISTRY/$ECR_REPOSITORY:latest"
+        if [ -n "$ECR_REGISTRY" ] && [ -n "$ECR_REPOSITORY" ] && [ -n "$IMAGE_TAG" ]; then
+          docker rmi $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        else
+          echo "One or more required variables are not set. Skipping image removal."
+        fi
