@@ -1,8 +1,10 @@
-resource "aws_apprunner_service" "service" {
-  service_name = "kjell-is-king"
+resource "aws_apprunner_service" "apprunner_service" {
+  service_name = var.service_name
 
   instance_configuration {
-    instance_role_arn = aws_iam_role.role_for_apprunner_service.arn
+    instance_role_arn = aws_iam_role.apprunner_service_role.arn
+    cpu               = 256
+    memory            = 1024
   }
 
   source_configuration {
@@ -13,20 +15,19 @@ resource "aws_apprunner_service" "service" {
       image_configuration {
         port = "8080"
       }
-      image_identifier      = "244530008913.dkr.ecr.eu-west-1.amazonaws.com/kjell:latest"
+      image_identifier      = var.image_identifier
       image_repository_type = "ECR"
     }
     auto_deployments_enabled = true
   }
 }
 
-resource "aws_iam_role" "role_for_apprunner_service" {
-  name               = "kjell-role-thingy"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+resource "aws_iam_role" "apprunner_service_role" {
+  name               = "AppRunnerServiceRole"
+  assume_role_policy = data.aws_iam_policy_document.apprunner_assume_role.json
 }
 
-
-data "aws_iam_policy_document" "assume_role" {
+data "aws_iam_policy_document" "apprunner_assume_role" {
   statement {
     effect = "Allow"
 
@@ -39,35 +40,33 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
-data "aws_iam_policy_document" "policy" {
+data "aws_iam_policy_document" "apprunner_policy" {
   statement {
     effect    = "Allow"
     actions   = ["rekognition:*"]
     resources = ["*"]
   }
   
-  statement  {
+  statement {
     effect    = "Allow"
     actions   = ["s3:*"]
     resources = ["*"]
   }
 
-  statement  {
+  statement {
     effect    = "Allow"
     actions   = ["cloudwatch:*"]
     resources = ["*"]
   }
 }
 
-resource "aws_iam_policy" "policy" {
-  name        = "kjell-apr-policy-thingy"
-  description = "Policy for apprunner instance I think"
-  policy      = data.aws_iam_policy_document.policy.json
+resource "aws_iam_policy" "apprunner_policy" {
+  name        = "AppRunnerPolicy"
+  description = "Policy for AWS App Runner service instance"
+  policy      = data.aws_iam_policy_document.apprunner_policy.json
 }
 
-
-resource "aws_iam_role_policy_attachment" "attachment" {
-  role       = aws_iam_role.role_for_apprunner_service.name
-  policy_arn = aws_iam_policy.policy.arn
+resource "aws_iam_role_policy_attachment" "policy_attachment" {
+  role       = aws_iam_role.apprunner_service_role.name
+  policy_arn = aws_iam_policy.apprunner_policy.arn
 }
-
