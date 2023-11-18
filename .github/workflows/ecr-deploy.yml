@@ -57,6 +57,7 @@ jobs:
 
     - name: Initialize Terraform
       run: terraform init
+      working-directory: pgr301exam/infra
 
     - name: Apply Terraform
       run: terraform apply -auto-approve
