@@ -7,5 +7,5 @@ variable "service_name" {
 variable "image_identifier" {
   description = "ECR image identifier for AWS App Runner service"
   type        = string
-  default     = "244530008913.dkr.ecr.eu-west-1.amazonaws.com/kjell:latest"
+  default     = "244530008913.dkr.ecr.eu-west-1.amazonaws.com/2029-repository:latest"
 }
