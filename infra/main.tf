@@ -9,7 +9,7 @@ resource "aws_apprunner_service" "apprunner_service" {
 
   source_configuration {
     authentication_configuration {
-      access_role_arn = "arn:aws:iam::244530008913:role/service-role/AppRunnerECRAccessRole"
+      access_role_arn = aws_iam_role.apprunner_service_role.arn
     }
     image_repository {
       image_configuration {
@@ -23,7 +23,7 @@ resource "aws_apprunner_service" "apprunner_service" {
 }
 
 resource "aws_iam_role" "apprunner_service_role" {
-  name               = "NewAppRunnerServiceRole"  
+  name               = "FunnyUniqueAppRunnerServiceRole"
   assume_role_policy = data.aws_iam_policy_document.apprunner_assume_role.json
 }
 
@@ -61,7 +61,7 @@ data "aws_iam_policy_document" "apprunner_policy" {
 }
 
 resource "aws_iam_policy" "apprunner_policy" {
-  name        = "NewAppRunnerPolicy"  
+  name        = "FunnyUniqueAppRunnerPolicy"
   description = "Policy for AWS App Runner service instance"
   policy      = data.aws_iam_policy_document.apprunner_policy.json
 }
