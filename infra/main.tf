@@ -23,7 +23,7 @@ resource "aws_apprunner_service" "apprunner_service" {
 }
 
 resource "aws_iam_role" "apprunner_service_role" {
-  name               = "AppRunnerServiceRole"
+  name               = "NewAppRunnerServiceRole"  
   assume_role_policy = data.aws_iam_policy_document.apprunner_assume_role.json
 }
 
@@ -61,7 +61,7 @@ data "aws_iam_policy_document" "apprunner_policy" {
 }
 
 resource "aws_iam_policy" "apprunner_policy" {
-  name        = "AppRunnerPolicy"
+  name        = "NewAppRunnerPolicy"  
   description = "Policy for AWS App Runner service instance"
   policy      = data.aws_iam_policy_document.apprunner_policy.json
 }
