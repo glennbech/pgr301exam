@@ -1,7 +1,7 @@
 variable "service_name" {
   description = "The name of the AWS App Runner service"
   type        = string
-  default     = "candidate-2029"
+  default     = "candidate-2029-apprunner"
 }
 
 variable "image_identifier" {
