@@ -1,4 +1,17 @@
-resource "aws_apprunner_service" "apprunner_service" {
+terraform {
+  backend "s3" {
+    bucket         = "2029-terraform-state-bucket"
+    key            = "nime003/state/apprunner.state"
+    region         = "eu-west-1"
+    encrypt        = true
+  }
+}
+
+provider "aws" {
+  region = "eu-west-1"
+}
+
+resource "aws_apprunner_service" "service" {
   service_name = var.service_name
 
   instance_configuration {
@@ -15,7 +28,7 @@ resource "aws_apprunner_service" "apprunner_service" {
       image_configuration {
         port = "8080"
       }
-      image_identifier      = var.image_identifier
+      image_identifier      = var.img
       image_repository_type = "ECR"
     }
     auto_deployments_enabled = true
