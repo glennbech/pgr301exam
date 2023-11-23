@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket         = "2029-terraform-state-bucket"
+    bucket         = "pgr301-2021-terraform-state"
     key            = "nime003/state/apprunner.state"
-    region         = "eu-west-1"
+    region         = "eu-north-1"
     encrypt        = true
   }
 }
