@@ -1,3 +1,7 @@
+provider "aws" {
+  region = "eu-west-1"
+}
+
 resource "aws_apprunner_service" "apprunner_service" {
   service_name = var.service_name
 
