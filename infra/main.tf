@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "eu-west-1"
+  region = var.aws_region
 }
 
 resource "aws_apprunner_service" "service" {
@@ -38,40 +38,6 @@ resource "aws_apprunner_service" "service" {
 resource "aws_iam_role" "role_for_apprunner_service" {
   name               = "candidate-2029-apprunnerrole"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
-}
-
-
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["tasks.apprunner.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-data "aws_iam_policy_document" "policy" {
-  statement {
-    effect    = "Allow"
-    actions   = ["rekognition:*"]
-    resources = ["*"]
-  }
-  
-  statement  {
-    effect    = "Allow"
-    actions   = ["s3:*"]
-    resources = ["*"]
-  }
-
-  statement  {
-    effect    = "Allow"
-    actions   = ["cloudwatch:*"]
-    resources = ["*"]
-  }
 }
 
 resource "aws_iam_policy" "policy" {

@@ -9,3 +9,9 @@ variable "image_identifier" {
   type        = string
   default     = "244530008913.dkr.ecr.eu-west-1.amazonaws.com/2029-repository:latest"
 }
+
+variable "aws_region" {
+  description = "AWS region for the resources"
+  type        = string
+  default     = "eu-west-1"
+}
