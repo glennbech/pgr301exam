@@ -60,7 +60,9 @@ jobs:
         uses: hashicorp/setup-terraform@v1
 
       - name: Initialize Terraform
-        run: terraform init
+        run: |
+            cd infra
+            terraform init
         working-directory: infra
 
       - name: Terraform Plan
