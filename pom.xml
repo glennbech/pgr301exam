@@ -42,6 +42,21 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <!-- Micrometer core dependency -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+            <version>1.12.0</version>
+        </dependency>
+        
+        <!-- Mincrometer cloudwatch registry -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-cloudwatch</artifactId>
+            <version>1.12.0</version>
+        </dependency>
+        
     </dependencies>
 
     <build>
