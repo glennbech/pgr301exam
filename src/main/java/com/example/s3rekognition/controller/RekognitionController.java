@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-
 @RestController
 public class RekognitionController implements ApplicationListener<ApplicationReadyEvent> {
 
@@ -38,10 +37,16 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
         this.rekognitionClient = AmazonRekognitionClientBuilder.standard().build();
     }
 
+    
+    @Override
+    public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+        // emptyfornow
+        logger.info("The application has started and is ready to accept requests.");
+    }
+
     /**
      * This endpoint takes an S3 bucket name in as an argument, scans all the
      * Files in the bucket for Protective Gear Violations.
-     * <p>
      *
      * @param bucketName
      * @return
@@ -107,9 +112,9 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
                 .register(meterRegistry);
 
         PPEResponse ppeResponse = new PPEResponse(bucketName, classificationResponses);
-        
+
         sample.stop();
-        
+
         return ResponseEntity.ok(ppeResponse);
     }
 
