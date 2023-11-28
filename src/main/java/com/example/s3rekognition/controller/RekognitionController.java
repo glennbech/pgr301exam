@@ -15,6 +15,12 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.time.Duration;
+import java.util.Map;
+import io.micrometer.cloudwatch2.CloudWatchConfig;
+import io.micrometer.cloudwatch2.CloudWatchMeterRegistry;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.config.MeterFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,8 +39,30 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
     private static final Logger logger = Logger.getLogger(RekognitionController.class.getName());
 
     public RekognitionController() {
+         // configure the CloudWatchConfig
+        CloudWatchConfig cloudWatchConfig = setupCloudWatchConfig();
+
+        // create a cloudWatchMeterRegistry and bind it to the global registry
+        CloudWatchMeterRegistry cloudWatchRegistry = new CloudWatchMeterRegistry(cloudWatchConfig, Clock.SYSTEM);
+        meterRegistry.config().meterFilter(MeterFilter.acceptNameStartsWith("candidate2029_"));
+        ((CompositeMeterRegistry) meterRegistry).add(cloudWatchRegistry);
+        
         this.s3Client = AmazonS3ClientBuilder.standard().build();
         this.rekognitionClient = AmazonRekognitionClientBuilder.standard().build();
+    }
+    
+    private CloudWatchConfig setupCloudWatchConfig() {
+        return new CloudWatchConfig() {
+            private final Map<String, String> configuration = Map.of(
+                "cloudwatch.namespace", "candidate2029",
+                "cloudwatch.step", Duration.ofSeconds(5).toString()
+            );
+
+            @Override
+            public String get(String key) {
+                return configuration.get(key);
+            }
+        };
     }
 
     
