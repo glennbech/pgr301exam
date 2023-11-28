@@ -10,14 +10,14 @@ ECR_REGISTRY_URL
 
 
 1b
-this should work, i had to incapulate keys with ""
+burde kjøre, må kanskje wrappe keys med ""
 docker build -t kjellpy . 
 docker run -e AWS_ACCESS_KEY_ID=XXX -e AWS_SECRET_ACCESS_KEY=YYY -e BUCKET_NAME=kjellsimagebucket kjellpy
 
 add /scan-ppe?bucketName=kjellsimagebucket to the url in browser to see json object after running mvn spring-boot:run
 
 2a
-this should also run, might need to encapsulate secrets with ""
+burde kjøre, må kanskje wrappe keys med ""
 docker build -t ppe . 
 docker run -p 8080:8080 -e AWS_ACCESS_KEY_ID=XXX -e AWS_SECRET_ACCESS_KEY=YYY -e BUCKET_NAME=kjellsimagebucket ppe
 
@@ -33,6 +33,13 @@ og steder i et sykehus. Det kan fortelle noe om hvor mange leger er sammen til v
 
 Jeg har også med Gague som ikke egentlig er så relevant for eksamenen, men kan være relevant hvis man skalerer
 opp programmet til å scanne mange bilder flere ganger, det kan gi god informasjon om hvor stor workload x antall bilder per scan krever.
+
+
+4b
+namespace på alarm.tf er hardcoded siden jeg hadde noen problemer, e-postadressen endres i variables.tf som må endres til hvem en
+som skal få e-post.
+
+
 
 Oppgave 5 kandidat 2029
 A
