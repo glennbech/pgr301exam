@@ -21,6 +21,8 @@ import io.micrometer.cloudwatch2.CloudWatchConfig;
 import io.micrometer.cloudwatch2.CloudWatchMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.cloudwatch.CloudWatchConfig;
+import io.micrometer.cloudwatch.CloudWatchMeterRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +62,7 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
 
             @Override
             public String get(String key) {
-                return configuration.get(key);
+                return configuration.getOrDefault(key, null);
             }
         };
     }
