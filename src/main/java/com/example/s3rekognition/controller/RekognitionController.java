@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.logging.Logger;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClientBuilder;
-import io.micrometer.core.instrument.config.MeterFilter;
 
 @RestController
 public class RekognitionController implements ApplicationListener<ApplicationReadyEvent> {
@@ -33,6 +32,7 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
     private final AmazonRekognition rekognitionClient;
     private final MeterRegistry meterRegistry;
     private final AmazonCloudWatchAsync amazonCloudWatchAsync;
+    private final Counter violationCounter;
     private static final Logger logger = Logger.getLogger(RekognitionController.class.getName());
 
     @Autowired
@@ -41,6 +41,7 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
         this.amazonCloudWatchAsync = AmazonCloudWatchAsyncClientBuilder.defaultClient();
         this.s3Client = AmazonS3ClientBuilder.standard().build();
         this.rekognitionClient = AmazonRekognitionClientBuilder.standard().build();
+        this.violationCounter = meterRegistry.counter("violations.true.count", "type", "violation");
         setupCloudWatchMeterRegistry();
     }
     
@@ -111,10 +112,14 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
         return ResponseEntity.ok(ppeResponse);
     }
 
-    private static boolean isViolation(DetectProtectiveEquipmentResult result) {
-        return result.getPersons().stream()
-                .flatMap(p -> p.getBodyParts().stream())
-                .anyMatch(bodyPart -> bodyPart.getName().equals("FACE")
-                        && bodyPart.getEquipmentDetections().isEmpty());
+    private boolean isViolation(DetectProtectiveEquipmentResult result) {
+        boolean violation = result.getPersons().stream()
+                                  .flatMap(p -> p.getBodyParts().stream())
+                                  .anyMatch(bodyPart -> bodyPart.getName().equals("FACE")
+                                              && bodyPart.getEquipmentDetections().isEmpty());
+        if (violation) {
+            violationCounter.increment();
+        }
+        return violation;
     }
 }

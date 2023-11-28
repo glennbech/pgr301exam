@@ -15,3 +15,15 @@ variable "aws_region" {
   type        = string
   default     = "eu-west-1"
 }
+
+variable "namespace" {
+  type        = string
+  description = "The namespace for the CloudWatch metrics"
+  default     = "candidate2029"
+}
+
+variable "notification_email" {
+  type        = string
+  description = "Email address to receive notifications"
+  default     = "tenico05@gmail.com"
+}
