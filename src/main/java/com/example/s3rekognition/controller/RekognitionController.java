@@ -10,6 +10,8 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.example.s3rekognition.PPEClassificationResponse;
 import com.example.s3rekognition.PPEResponse;
 import io.micrometer.core.instrument.*;
+import io.micrometer.cloudwatch.CloudWatchConfig;
+import io.micrometer.cloudwatch.CloudWatchMeterRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
@@ -17,13 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.Duration;
 import java.util.Map;
-import io.micrometer.cloudwatch2.CloudWatchConfig;
-import io.micrometer.cloudwatch2.CloudWatchMeterRegistry;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.cloudwatch.CloudWatchConfig;
-import io.micrometer.cloudwatch.CloudWatchMeterRegistry;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -34,21 +29,15 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
     private final AmazonS3 s3Client;
     private final AmazonRekognition rekognitionClient;
 
-    // micrometer meter registry
     @Autowired
     private MeterRegistry meterRegistry;
 
     private static final Logger logger = Logger.getLogger(RekognitionController.class.getName());
 
     public RekognitionController() {
-         // configure the CloudWatchConfig
         CloudWatchConfig cloudWatchConfig = setupCloudWatchConfig();
-
-        // create a cloudWatchMeterRegistry and bind it to the global registry
         CloudWatchMeterRegistry cloudWatchRegistry = new CloudWatchMeterRegistry(cloudWatchConfig, Clock.SYSTEM);
         meterRegistry.config().meterFilter(MeterFilter.acceptNameStartsWith("candidate2029_"));
-        ((CompositeMeterRegistry) meterRegistry).add(cloudWatchRegistry);
-        
         this.s3Client = AmazonS3ClientBuilder.standard().build();
         this.rekognitionClient = AmazonRekognitionClientBuilder.standard().build();
     }
@@ -67,45 +56,24 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
         };
     }
 
-    
     @Override
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
-        // emptyfornow
         logger.info("The application has started and is ready to accept requests.");
     }
 
-    /**
-     * This endpoint takes an S3 bucket name in as an argument, scans all the
-     * Files in the bucket for Protective Gear Violations.
-     *
-     * @param bucketName
-     * @return
-     */
     @GetMapping(value = "/scan-ppe", consumes = "*/*", produces = "application/json")
     @ResponseBody
     public ResponseEntity<PPEResponse> scanForPPE(@RequestParam String bucketName) {
-        // starting the scanning duration measurement
-        // code for micrometer measuring instruments
         LongTaskTimer scanningTimer = LongTaskTimer.builder("s3.scanning.duration")
                 .description("Time taken to scan S3 bucket")
                 .register(meterRegistry);
 
-        LongTaskTimer.Sample sample = scanningTimer.start(); // <-- starting the timer
-
-        // List all objects in the S3 bucket
+        LongTaskTimer.Sample sample = scanningTimer.start();
         ListObjectsV2Result imageList = s3Client.listObjectsV2(bucketName);
-
-        // This will hold all of our classifications
         List<PPEClassificationResponse> classificationResponses = new ArrayList<>();
-
-        // This is all the images in the bucket
         List<S3ObjectSummary> images = imageList.getObjectSummaries();
-
-        // Iterate over each object and scan for PPE
         for (S3ObjectSummary image : images) {
             logger.info("scanning " + image.getKey());
-
-            // This is where the magic happens, use AWS rekognition to detect PPE
             DetectProtectiveEquipmentRequest request = new DetectProtectiveEquipmentRequest()
                     .withImage(new Image()
                             .withS3Object(new S3Object()
@@ -114,49 +82,25 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
                     .withSummarizationAttributes(new ProtectiveEquipmentSummarizationAttributes()
                             .withMinConfidence(80f)
                             .withRequiredEquipmentTypes("FACE_COVER"));
-
             DetectProtectiveEquipmentResult result = rekognitionClient.detectProtectiveEquipment(request);
-
-            // If any person on an image lacks PPE on the face, it's a violation of regulations
             boolean violation = isViolation(result);
-
             logger.info("scanning " + image.getKey() + ", violation result " + violation);
-
             int personCount = result.getPersons().size();
-
-            // record the person count for each image scanned
-            // code for micrometer measuring instruments
             DistributionSummary personCountSummary = DistributionSummary.builder("s3.person.count")
                     .description("Distribution of persons detected in images")
                     .register(meterRegistry);
             personCountSummary.record(personCount);
-
             PPEClassificationResponse classification = new PPEClassificationResponse(image.getKey(), personCount, violation);
             classificationResponses.add(classification);
         }
-
-        // registering the gauge to monitor the size of the response list
-        // new code for Micrometer measuring instruments
         Gauge.builder("s3.images.processed", classificationResponses, List::size)
                 .description("Number of images processed")
                 .register(meterRegistry);
-
         PPEResponse ppeResponse = new PPEResponse(bucketName, classificationResponses);
-
         sample.stop();
-
         return ResponseEntity.ok(ppeResponse);
     }
 
-    /**
-     * Detects if the image has a protective gear violation for the FACE bodypart-
-     * It does so by iterating over all persons in a picture, and then again over
-     * each body part of the person. If the body part is a FACE and there is no
-     * protective gear on it, a violation is recorded for the picture.
-     *
-     * @param result
-     * @return
-     */
     private static boolean isViolation(DetectProtectiveEquipmentResult result) {
         return result.getPersons().stream()
                 .flatMap(p -> p.getBodyParts().stream())
