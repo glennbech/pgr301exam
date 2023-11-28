@@ -22,28 +22,29 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClientBuilder;
 
 @RestController
 public class RekognitionController implements ApplicationListener<ApplicationReadyEvent> {
 
     private final AmazonS3 s3Client;
     private final AmazonRekognition rekognitionClient;
-
-    @Autowired
-    private MeterRegistry meterRegistry;
-
+    private final MeterRegistry meterRegistry;
+    private final AmazonCloudWatchAsync amazonCloudWatchAsync;
     private static final Logger logger = Logger.getLogger(RekognitionController.class.getName());
 
-    public RekognitionController() {
-        CloudWatchConfig cloudWatchConfig = setupCloudWatchConfig();
-        CloudWatchMeterRegistry cloudWatchRegistry = new CloudWatchMeterRegistry(cloudWatchConfig, Clock.SYSTEM);
-        meterRegistry.config().meterFilter(MeterFilter.acceptNameStartsWith("candidate2029_"));
+    @Autowired
+    public RekognitionController(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+        this.amazonCloudWatchAsync = AmazonCloudWatchAsyncClientBuilder.defaultClient();
         this.s3Client = AmazonS3ClientBuilder.standard().build();
         this.rekognitionClient = AmazonRekognitionClientBuilder.standard().build();
+        setupCloudWatchMeterRegistry();
     }
     
-    private CloudWatchConfig setupCloudWatchConfig() {
-        return new CloudWatchConfig() {
+    private void setupCloudWatchMeterRegistry() {
+        CloudWatchConfig cloudWatchConfig = new CloudWatchConfig() {
             private final Map<String, String> configuration = Map.of(
                 "cloudwatch.namespace", "candidate2029",
                 "cloudwatch.step", Duration.ofSeconds(5).toString()
@@ -54,8 +55,11 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
                 return configuration.getOrDefault(key, null);
             }
         };
-    }
 
+        CloudWatchMeterRegistry cloudWatchRegistry = new CloudWatchMeterRegistry(cloudWatchConfig, Clock.SYSTEM, amazonCloudWatchAsync);
+        meterRegistry.config().meterFilter(MeterFilter.acceptNameStartsWith("candidate2029_"));
+    }
+    
     @Override
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         logger.info("The application has started and is ready to accept requests.");
@@ -72,6 +76,7 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
         ListObjectsV2Result imageList = s3Client.listObjectsV2(bucketName);
         List<PPEClassificationResponse> classificationResponses = new ArrayList<>();
         List<S3ObjectSummary> images = imageList.getObjectSummaries();
+
         for (S3ObjectSummary image : images) {
             logger.info("scanning " + image.getKey());
             DetectProtectiveEquipmentRequest request = new DetectProtectiveEquipmentRequest()
@@ -82,6 +87,7 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
                     .withSummarizationAttributes(new ProtectiveEquipmentSummarizationAttributes()
                             .withMinConfidence(80f)
                             .withRequiredEquipmentTypes("FACE_COVER"));
+
             DetectProtectiveEquipmentResult result = rekognitionClient.detectProtectiveEquipment(request);
             boolean violation = isViolation(result);
             logger.info("scanning " + image.getKey() + ", violation result " + violation);
@@ -90,12 +96,15 @@ public class RekognitionController implements ApplicationListener<ApplicationRea
                     .description("Distribution of persons detected in images")
                     .register(meterRegistry);
             personCountSummary.record(personCount);
+
             PPEClassificationResponse classification = new PPEClassificationResponse(image.getKey(), personCount, violation);
             classificationResponses.add(classification);
         }
+
         Gauge.builder("s3.images.processed", classificationResponses, List::size)
                 .description("Number of images processed")
                 .register(meterRegistry);
+
         PPEResponse ppeResponse = new PPEResponse(bucketName, classificationResponses);
         sample.stop();
         return ResponseEntity.ok(ppeResponse);
