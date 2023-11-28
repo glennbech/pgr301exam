@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClientBuilder;
+import io.micrometer.core.instrument.config.MeterFilter;
 
 @RestController
 public class RekognitionController implements ApplicationListener<ApplicationReadyEvent> {
