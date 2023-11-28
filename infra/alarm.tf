@@ -13,7 +13,7 @@ resource "aws_cloudwatch_metric_alarm" "violation_alarm" {
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "violations.true.count"
-  namespace           = "testnamespace2029"
+  namespace           = "candidate-2029-apprunner"
   period              = 60
   statistic           = "Sum"
   threshold           = 1
