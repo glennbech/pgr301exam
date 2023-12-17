@@ -40,4 +40,4 @@ jobs:
           BUCKET_NAME: kjellsimagebucket
         run: |
           cd kjell/hello_world
-          sam deploy --no-fail-on-empty-changeset --stack-name exampgr301-stack-candidate2029 --s3-bucket 2029-bucket --region ${{ secrets.AWS_REGION }} --capabilities CAPABILITY_IAM --template-file ../template.yaml
+          sam deploy --no-fail-on-empty-changeset --stack-name exampgr301-stack-candidate2029s --s3-bucket 2029-bucket --region ${{ secrets.AWS_REGION }} --capabilities CAPABILITY_IAM --template-file ../template.yaml
