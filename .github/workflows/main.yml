@@ -22,6 +22,7 @@ jobs:
           pip install aws-sam-cli
           sam build --template-file ../template.yaml
 
+
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: build
